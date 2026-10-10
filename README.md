@@ -15,7 +15,7 @@ height="80">](https://play.google.com/store/apps/details?id=dev.notune.transcrib
 - **100% offline & private:** The Parakeet TDT model runs entirely on-device — no audio ever leaves your phone, and no network is required.
 - **Live Subtitles:** Real-time captions for any audio/video playing on your device.
 - **Optional voice keyboard:** A built-in keyboard you can switch to for voice input wherever you prefer it.
-- **Supported Languages:** Bulgarian, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French, German, Greek, Hungarian, Italian, Latvian, Lithuanian, Maltese, Polish, Portuguese, Romanian, Slovak, Slovenian, Spanish, Swedish, Russian, Ukrainian.
+- **Built-in language:** English (Parakeet TDT 0.6B v2). Other languages via imported transcribe.cpp GGUF models.
 - **Custom models:** Import any [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp) GGUF model (Whisper, Nemotron streaming, Canary, more Parakeet variants, …) from a downloaded file — the app stays fully offline; downloads happen in your browser.
 - **Efficient native backend:** All models run through [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp) (ggml), wrapped in a safe Rust core.
 
@@ -137,7 +137,7 @@ export STORE_PASS=yourpassword
 
 ### Model Assets
 
-The built-in Parakeet TDT GGUF model (~485 MB) is automatically downloaded from HuggingFace during the first build via a Gradle task. The checksum is verified with SHA-256. No manual download is needed.
+The built-in Parakeet TDT 0.6B **v2 Q8_0** GGUF (~730 MB) is automatically downloaded from HuggingFace during the first build via a Gradle task. The checksum is verified with SHA-256. No manual download is needed. The model is English-only, CC-BY-4.0.
 
 ## Project Structure
 
@@ -160,8 +160,8 @@ The built-in Parakeet TDT GGUF model (~485 MB) is automatically downloaded from 
 
 ## Acknowledgments
 
-- **Speech Model:** [Parakeet TDT 0.6b v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) by NVIDIA.
-    - GGUF conversion by [handy-computer](https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf).
+- **Speech Model:** [Parakeet TDT 0.6b v2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2) by NVIDIA.
+    - GGUF conversion by [handy-computer](https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v2-gguf) (`parakeet-tdt-0.6b-v2-Q8_0.gguf`, SHA-256 `f0d0e99cebb6d3b83f1f7069b82b5d3c2e39a54545b0da039cb4bafd9c4e5caa`).
     - Licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - **Inference Backend:** [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp) by CJ Pais / Handy Computer.
 

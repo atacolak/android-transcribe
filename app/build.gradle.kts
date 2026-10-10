@@ -167,11 +167,11 @@ data class ModelFile(val name: String, val sha256: String)
 // The bundled GGUF goes into the model_assets asset pack so the base module
 // stays under the Play Store 200 MB compressed-download limit.
 val modelPackFiles = listOf(
-    ModelFile("parakeet-tdt-0.6b-v3-Q4_K_M.gguf",
-        "b68557be1e3c40207fd7c4bd9d63f1d3316b963f15325bfb0cc16a8bb0ffd181"),
+    ModelFile("parakeet-tdt-0.6b-v2-Q8_0.gguf",
+        "f0d0e99cebb6d3b83f1f7069b82b5d3c2e39a54545b0da039cb4bafd9c4e5caa"),
 )
 
-val huggingFaceRepo = "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf/resolve/main"
+val huggingFaceRepo = "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v2-gguf/resolve/main"
 
 fun downloadToDir(assetsDir: File, files: List<ModelFile>) {
     assetsDir.mkdirs()

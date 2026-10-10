@@ -46,7 +46,7 @@
     <string name="models_title">Речевые модели</string>
     <string name="models_section">Речевая модель</string>
     <string name="models_active_section">Активная модель</string>
-    <string name="models_builtin_sub">Встроена в приложение · 25 европейских языков</string>
+    <string name="models_builtin_sub">Встроена в приложение · только английский</string>
     <string name="model_desc_parakeet110m">Только английский, маленькая и быстрая</string>
     <string name="model_desc_sensevoice">Английский, китайский, кантонский, японский, корейский; быстрая</string>
     <string name="model_desc_whisper_small">99 языков, компактная; переводит на английский</string>

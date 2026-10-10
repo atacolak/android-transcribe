@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_models).setOnClickListener(v ->
                 startActivity(new Intent(this, ModelsActivity.class)));
+        findViewById(R.id.btn_vocab).setOnClickListener(v ->
+                startActivity(new Intent(this, VocabActivity.class)));
 
         benchButton = findViewById(R.id.btn_benchmark);
         benchResultText = findViewById(R.id.text_bench_result);
@@ -91,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
         // Settings stored as marker files in filesDir (readable from the :ime
         // process and native code without a content provider).
         bindMarkerSwitch(R.id.switch_auto_record, "auto_record", false);
+        bindMarkerSwitch(R.id.switch_auto_switch_back, "auto_switch_back", false);
         bindMarkerSwitch(R.id.switch_select_transcription, "select_transcription", false);
         bindMarkerSwitch(R.id.switch_pause_audio, "pause_audio", false);
         // Record-in-background defaults to ON; its marker file is the opt-out.

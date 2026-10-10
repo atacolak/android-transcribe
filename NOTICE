@@ -1,0 +1,15 @@
+This application bundles a GGUF conversion of NVIDIA Parakeet TDT 0.6B V2.
+
+  Model: nvidia/parakeet-tdt-0.6b-v2
+  GGUF: handy-computer/parakeet-tdt-0.6b-v2-gguf
+  File: parakeet-tdt-0.6b-v2-Q8_0.gguf
+  SHA-256: f0d0e99cebb6d3b83f1f7069b82b5d3c2e39a54545b0da039cb4bafd9c4e5caa
+  License: CC-BY-4.0
+  Language: English only
+
+See https://creativecommons.org/licenses/by/4.0/ and the upstream model card.
+The application source remains MIT (LICENSE).
+
+Custom-vocabulary fuzzy matching started from Handy
+(https://github.com/cjpais/Handy) src-tauri/src/audio_toolkit/text.rs,
+MIT License, Copyright (c) CJ Pais. Thresholds were not copied.

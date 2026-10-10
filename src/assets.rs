@@ -10,6 +10,9 @@ const BUILTIN_MODEL_DIR: &str = "builtin-model";
 /// the directory is assumed to be incomplete (e.g. interrupted mid-extraction)
 /// and the assets will be re-extracted.
 const EXTRACTION_COMPLETE_MARKER: &str = ".extraction_complete";
+/// Filename of the currently bundled GGUF. A leftover v3 file must not satisfy
+/// the extraction marker or upgrades keep serving the old model.
+const BUILTIN_GGUF: &str = "parakeet-tdt-0.6b-v2-Q8_0.gguf";
 /// Model directory of the pre-GGUF (ONNX) app versions; deleted on sight so
 /// upgrades don't leave ~670 MB of dead files behind.
 const LEGACY_MODEL_DIR: &str = "parakeet-tdt-0.6b-v3-int8";
@@ -45,9 +48,11 @@ pub fn extract_builtin_model(env: &mut JNIEnv, context: &JObject) -> anyhow::Res
     let model_dir = base_path.join(BUILTIN_MODEL_DIR);
     let marker_file = model_dir.join(EXTRACTION_COMPLETE_MARKER);
 
-    // Only skip extraction if the marker file exists (proves prior extraction completed)
-    if marker_file.exists() {
-        return find_gguf(&model_dir);
+    // Skip extraction only when the current bundled filename is present.
+    // A leftover v3 GGUF plus an old marker would otherwise stick forever.
+    let expected = model_dir.join(BUILTIN_GGUF);
+    if marker_file.exists() && expected.is_file() {
+        return Ok(expected);
     }
 
     // Incomplete or missing — wipe and re-extract

@@ -46,7 +46,7 @@
     <string name="models_title">Modèles vocaux</string>
     <string name="models_section">Modèle vocal</string>
     <string name="models_active_section">Modèle actif</string>
-    <string name="models_builtin_sub">Inclus dans l\'application · 25 langues européennes</string>
+    <string name="models_builtin_sub">Inclus dans l\'application · anglais uniquement</string>
     <string name="model_desc_parakeet110m">Anglais uniquement, petit et rapide</string>
     <string name="model_desc_sensevoice">Anglais, chinois, cantonais, japonais, coréen ; rapide</string>
     <string name="model_desc_whisper_small">99 langues, compact ; traduit vers l\'anglais</string>
