@@ -453,11 +453,9 @@ public class RustInputMethodService extends InputMethodService {
         }
     }
 
-    // Called from Rust
     public void onTextTranscribed(String text) {
         mainHandler.post(() -> {
             if (text == null || text.trim().isEmpty()) {
-                // Nothing recognized — don't insert a stray space.
                 updateRecordButtonUI(false);
                 if (statusView != null) statusView.setText("Tap to Record");
                 if (pauseAudioActive) {
@@ -472,28 +470,20 @@ public class RustInputMethodService extends InputMethodService {
             }
             String committed = text + " ";
             InputConnection ic = getCurrentInputConnection();
-            if (inputActive && ic != null) {
+            if (ic != null) {
                 commitTranscribedText(ic, committed);
-                if (pauseAudioActive) {
-                    audioPauser.abandon(this);
-                    pauseAudioActive = false;
-                }
-                updateRecordButtonUI(false);
-                if (statusView != null) statusView.setText("Tap to Record");
-                maybeSwitchBackAfterSuccess();
+                pendingCommitText = null;
             } else {
-                // No editor is focused right now (common on long transcribes where
-                // a web field in Firefox/Gemini dropped focus while we processed
-                // audio). Committing now would be silently dropped, so defer the
-                // text until a field is focused again instead of losing it.
                 pendingCommitText = committed;
-                if (pauseAudioActive) {
-                    audioPauser.abandon(this);
-                    pauseAudioActive = false;
-                }
-                updateRecordButtonUI(false);
-                if (statusView != null) statusView.setText("Tap to Record");
             }
+            if (pauseAudioActive) {
+                audioPauser.abandon(this);
+                pauseAudioActive = false;
+            }
+            updateRecordButtonUI(false);
+            if (statusView != null) statusView.setText("Tap to Record");
+            // One UI drops commitText if we switch IME in the same frame.
+            mainHandler.postDelayed(this::maybeSwitchBackAfterSuccess, 280);
         });
     }
 

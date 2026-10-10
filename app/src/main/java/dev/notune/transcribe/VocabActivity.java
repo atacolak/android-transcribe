@@ -41,8 +41,8 @@ public class VocabActivity extends AppCompatActivity {
         System.loadLibrary("android_transcribe_app");
     }
 
-    private native String loadVocabNative();
-    private native boolean saveVocabNative(String json);
+    private native String loadVocabNative(VocabActivity activity);
+    private native boolean saveVocabNative(VocabActivity activity, String json);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,10 +71,13 @@ public class VocabActivity extends AppCompatActivity {
 
     private void loadStore() {
         try {
-            String json = loadVocabNative();
+            String json = loadVocabNative(this);
             store = (json == null || json.isEmpty()) ? new JSONObject() : new JSONObject(json);
         } catch (Exception e) {
             Log.e(TAG, "load vocab", e);
+            store = new JSONObject();
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "load vocab native", e);
             store = new JSONObject();
         }
         fuzzyGlobal.setOnCheckedChangeListener(null);
@@ -97,8 +100,12 @@ public class VocabActivity extends AppCompatActivity {
     }
 
     private void persist() {
-        if (!saveVocabNative(store.toString())) {
-            Snackbar.make(list, "Save failed", Snackbar.LENGTH_SHORT).show();
+        try {
+            if (!saveVocabNative(this, store.toString())) {
+                Snackbar.make(list, "Save failed", Snackbar.LENGTH_SHORT).show();
+            }
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "save vocab native", e);
         }
     }
 
