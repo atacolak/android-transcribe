@@ -4,32 +4,26 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.CheckBox;
-import android.widget.EditText;
+import android.view.inputmethod.EditorInfo;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 public class VocabActivity extends AppCompatActivity {
     private static final String TAG = "VocabActivity";
 
     private LinearLayout list;
     private TextView empty;
-    private MaterialSwitch fuzzyGlobal;
-    private MaterialSwitch diag;
+    private TextInputEditText input;
     private JSONObject store;
 
     static {
@@ -53,19 +47,17 @@ public class VocabActivity extends AppCompatActivity {
 
         list = findViewById(R.id.vocab_list);
         empty = findViewById(R.id.vocab_empty);
-        fuzzyGlobal = findViewById(R.id.switch_vocab_fuzzy);
-        diag = findViewById(R.id.switch_vocab_diag);
-        findViewById(R.id.btn_vocab_add).setOnClickListener(v -> editEntry(-1));
+        input = findViewById(R.id.vocab_input);
+        findViewById(R.id.btn_vocab_add).setOnClickListener(v -> addFromInput());
+        input.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                addFromInput();
+                return true;
+            }
+            return false;
+        });
 
         loadStore();
-        fuzzyGlobal.setOnCheckedChangeListener((b, on) -> {
-            putBool("fuzzy_enabled", on);
-            persist();
-        });
-        diag.setOnCheckedChangeListener((b, on) -> {
-            putBool("diag_raw", on);
-            persist();
-        });
         render();
     }
 
@@ -80,10 +72,7 @@ public class VocabActivity extends AppCompatActivity {
             Log.e(TAG, "load vocab native", e);
             store = new JSONObject();
         }
-        fuzzyGlobal.setOnCheckedChangeListener(null);
-        diag.setOnCheckedChangeListener(null);
-        fuzzyGlobal.setChecked(store.optBoolean("fuzzy_enabled", false));
-        diag.setChecked(store.optBoolean("diag_raw", false));
+        // matching ignores this flag; do not rewrite on-device json on open.
     }
 
     private JSONArray entries() {
@@ -93,10 +82,6 @@ public class VocabActivity extends AppCompatActivity {
             try { store.put("entries", a); } catch (Exception ignored) {}
         }
         return a;
-    }
-
-    private void putBool(String key, boolean v) {
-        try { store.put(key, v); } catch (Exception ignored) {}
     }
 
     private void persist() {
@@ -109,6 +94,66 @@ public class VocabActivity extends AppCompatActivity {
         }
     }
 
+    private static String matchKey(String word) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < word.length(); ) {
+            int cp = word.codePointAt(i);
+            if (Character.isLetterOrDigit(cp)) {
+                b.appendCodePoint(Character.toLowerCase(cp));
+            }
+            i += Character.charCount(cp);
+        }
+        return b.toString();
+    }
+
+    private void addFromInput() {
+        String word = input.getText() == null ? "" : input.getText().toString().trim();
+        if (word.isEmpty()) {
+            Snackbar.make(list, R.string.vocab_need_word, Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        String key = matchKey(word);
+        if (key.isEmpty()) {
+            Snackbar.make(list, R.string.vocab_need_word, Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        JSONArray arr = entries();
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject e = arr.optJSONObject(i);
+            if (e != null && key.equals(matchKey(e.optString("canonical")))) {
+                try { e.put("canonical", word); } catch (Exception ignored) {}
+                persist();
+                render();
+                input.setText("");
+                return;
+            }
+        }
+        try {
+            JSONObject e = new JSONObject();
+            e.put("canonical", word);
+            e.put("aliases", new JSONArray());
+            e.put("enabled", true);
+            e.put("fuzzy", true);
+            arr.put(e);
+            persist();
+            render();
+            input.setText("");
+        } catch (Exception ex) {
+            Log.e(TAG, "add word", ex);
+        }
+    }
+
+    private void deleteAt(int index) {
+        JSONArray arr = entries();
+        JSONArray next = new JSONArray();
+        for (int i = 0; i < arr.length(); i++) {
+            if (i != index) next.put(arr.opt(i));
+        }
+        try { store.put("entries", next); } catch (Exception ignored) {}
+        persist();
+        render();
+    }
+
     private void render() {
         list.removeAllViews();
         JSONArray arr = entries();
@@ -119,84 +164,11 @@ public class VocabActivity extends AppCompatActivity {
             if (e == null) continue;
             View row = inf.inflate(R.layout.item_vocab_entry, list, false);
             TextView title = row.findViewById(R.id.vocab_item_title);
-            TextView sub = row.findViewById(R.id.vocab_item_sub);
             title.setText(e.optString("canonical"));
-            List<String> aliases = new ArrayList<>();
-            JSONArray al = e.optJSONArray("aliases");
-            if (al != null) {
-                for (int j = 0; j < al.length(); j++) aliases.add(al.optString(j));
-            }
-            String flags = (e.optBoolean("enabled", true) ? "" : "disabled · ")
-                    + (e.optBoolean("fuzzy", false) ? "fuzzy" : "aliases only");
-            String heard = aliases.isEmpty() ? flags : String.join(", ", aliases) + " · " + flags;
-            sub.setText(heard);
+            ImageButton del = row.findViewById(R.id.vocab_item_delete);
             final int idx = i;
-            row.setOnClickListener(v -> editEntry(idx));
+            del.setOnClickListener(v -> deleteAt(idx));
             list.addView(row);
         }
-    }
-
-    private void editEntry(int index) {
-        boolean adding = index < 0;
-        JSONObject existing = adding ? new JSONObject() : entries().optJSONObject(index);
-        if (existing == null) existing = new JSONObject();
-        View form = LayoutInflater.from(this).inflate(R.layout.dialog_vocab_entry, null);
-        EditText canonical = form.findViewById(R.id.vocab_canonical);
-        EditText aliases = form.findViewById(R.id.vocab_aliases);
-        CheckBox enabled = form.findViewById(R.id.vocab_enabled);
-        CheckBox fuzzy = form.findViewById(R.id.vocab_fuzzy);
-        canonical.setText(existing.optString("canonical"));
-        JSONArray al = existing.optJSONArray("aliases");
-        if (al != null) {
-            List<String> parts = new ArrayList<>();
-            for (int i = 0; i < al.length(); i++) parts.add(al.optString(i));
-            aliases.setText(String.join(", ", parts));
-        }
-        enabled.setChecked(existing.optBoolean("enabled", true));
-        fuzzy.setChecked(existing.optBoolean("fuzzy", false));
-
-        MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(this)
-                .setTitle(adding ? R.string.vocab_add : R.string.vocab_title)
-                .setView(form)
-                .setPositiveButton(R.string.vocab_save, (d, w) -> {
-                    String can = canonical.getText().toString().trim();
-                    if (can.isEmpty()) {
-                        Snackbar.make(list, R.string.vocab_need_canonical, Snackbar.LENGTH_SHORT).show();
-                        return;
-                    }
-                    try {
-                        JSONObject e = new JSONObject();
-                        e.put("canonical", can);
-                        JSONArray next = new JSONArray();
-                        for (String part : aliases.getText().toString().split(",")) {
-                            String t = part.trim();
-                            if (!t.isEmpty()) next.put(t.toLowerCase(Locale.ROOT));
-                        }
-                        e.put("aliases", next);
-                        e.put("enabled", enabled.isChecked());
-                        e.put("fuzzy", fuzzy.isChecked());
-                        JSONArray arr = entries();
-                        if (adding) arr.put(e);
-                        else arr.put(index, e);
-                        persist();
-                        render();
-                    } catch (Exception ex) {
-                        Log.e(TAG, "save entry", ex);
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, null);
-        if (!adding) {
-            b.setNeutralButton(R.string.vocab_delete, (d, w) -> {
-                JSONArray arr = entries();
-                JSONArray next = new JSONArray();
-                for (int i = 0; i < arr.length(); i++) {
-                    if (i != index) next.put(arr.opt(i));
-                }
-                try { store.put("entries", next); } catch (Exception ignored) {}
-                persist();
-                render();
-            });
-        }
-        b.show();
     }
 }

@@ -30,19 +30,12 @@
     <string name="setting_auto_switch_back_desc">After a successful dictation, switch back to HeliBoard or whichever keyboard opened the voice input</string>
     <string name="btn_vocab">Custom vocabulary</string>
     <string name="vocab_title">Custom vocabulary</string>
-    <string name="vocab_desc">Replace what the model heard with your spelling. Explicit “heard as” phrases run first; optional conservative fuzzy matching is off until you enable it per entry.</string>
-    <string name="vocab_add">Add word</string>
-    <string name="vocab_canonical">Canonical spelling</string>
-    <string name="vocab_aliases">Heard as (comma-separated)</string>
-    <string name="vocab_enabled">Enabled</string>
-    <string name="vocab_fuzzy">Allow conservative fuzzy match</string>
-    <string name="vocab_fuzzy_global">Enable fuzzy matching</string>
-    <string name="vocab_fuzzy_global_desc">Off by default. When on, only entries with fuzzy enabled can replace similar-sounding phrases. Short common words are never replaced this way.</string>
-    <string name="vocab_save">Save</string>
+    <string name="vocab_desc">Words the model should spell this way. Type one and add.</string>
+    <string name="vocab_add">Add</string>
+    <string name="vocab_word">Word</string>
     <string name="vocab_delete">Delete</string>
-    <string name="vocab_empty">No entries yet</string>
-    <string name="vocab_diag">Show raw vs corrected (opt-in log)</string>
-    <string name="vocab_need_canonical">Canonical spelling is required</string>
+    <string name="vocab_empty">No words yet</string>
+    <string name="vocab_need_word">Type a word first</string>
 
     <string name="setting_select_transcription">Select transcription</string>
     <string name="setting_select_transcription_desc">Highlight transcribed text so it can be deleted with a single backspace</string>

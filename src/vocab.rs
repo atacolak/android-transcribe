@@ -3,8 +3,9 @@
 //! Starting point: Handy `apply_custom_words` (MIT, cjpais/Handy
 //! src-tauri/src/audio_toolkit/text.rs) — Levenshtein, Soundex, ≤3-word
 //! n-grams. Thresholds are **not** copied: Handy's 0.5 is too loose for
-//! short common words. Explicit aliases run first; fuzzy is opt-in and
-//! refuses a stoplist of ordinary words.
+//! short common words. The UI is a word list. Matching always runs
+//! exact aliases (user + derived acronym splits) then conservative fuzzy.
+//! Ordinary stoplist words are never fuzzy-replaced.
 //!
 //! Not applied inside `engine::transcribe_shared` (subtitles / file
 //! transcription must stay raw).
@@ -34,8 +35,8 @@ pub struct VocabEntry {
     pub aliases: Vec<String>,
     #[serde(default = "default_true")]
     pub enabled: bool,
-    /// Opt-in per entry. Off unless the user asks.
-    #[serde(default)]
+    /// Kept for old `vocab.json`; matching no longer gates on this.
+    #[serde(default = "default_true")]
     pub fuzzy: bool,
 }
 
@@ -62,7 +63,7 @@ fn default_threshold() -> f64 {
 impl Default for VocabStore {
     fn default() -> Self {
         Self {
-            fuzzy_enabled: false,
+            fuzzy_enabled: true,
             fuzzy_threshold: DEFAULT_THRESHOLD,
             diag_raw: false,
             entries: Vec::new(),
@@ -108,17 +109,10 @@ pub fn correct_text(text: &str, store: &VocabStore) -> String {
         return text.to_string();
     }
     let after_alias = apply_aliases(text, &enabled);
-    if !store.fuzzy_enabled {
-        return after_alias;
-    }
     let fuzzy_words: Vec<String> = enabled
         .iter()
-        .filter(|e| e.fuzzy)
         .map(|e| e.canonical.clone())
         .collect();
-    if fuzzy_words.is_empty() {
-        return after_alias;
-    }
     apply_fuzzy(&after_alias, &fuzzy_words, store.fuzzy_threshold)
 }
 
@@ -162,6 +156,85 @@ fn alias_tokens(alias: &str) -> Vec<String> {
         .collect()
 }
 
+fn entry_aliases(e: &VocabEntry) -> Vec<String> {
+    let mut out = e.aliases.clone();
+    for a in derived_aliases(&e.canonical) {
+        if !out.iter().any(|x| alias_tokens(x) == alias_tokens(&a)) {
+            out.push(a);
+        }
+    }
+    out
+}
+
+/// Acronym / CamelCase splits so typing `HCOM` catches "h com" / "h come".
+fn derived_aliases(canonical: &str) -> Vec<String> {
+    let compact = match_key(canonical);
+    if compact.chars().count() < 2 {
+        return Vec::new();
+    }
+    let mut out = Vec::new();
+    let letters: Vec<char> = compact.chars().collect();
+    let alpha_orig: String = canonical.chars().filter(|c| c.is_ascii_alphabetic()).collect();
+    let is_acronym = (2..=8).contains(&alpha_orig.len())
+        && alpha_orig.chars().all(|c| c.is_ascii_uppercase());
+
+    if is_acronym && letters.iter().all(|c| c.is_ascii_alphabetic()) {
+        out.push(letters.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(" "));
+        let rest: String = letters[1..].iter().collect();
+        out.push(format!("{} {}", letters[0], rest));
+        if rest.len() >= 2 && !rest.ends_with('e') {
+            out.push(format!("{} {}e", letters[0], rest));
+        }
+    }
+
+    let camel = split_camel(canonical);
+    if camel.len() > 1 {
+        let lower: Vec<String> = camel
+            .iter()
+            .map(|p| match_key(p))
+            .filter(|s| !s.is_empty())
+            .collect();
+        if lower.len() > 1 {
+            out.push(lower.join(" "));
+        }
+        let mut spaced = Vec::new();
+        for p in &camel {
+            let k = match_key(p);
+            let orig_alpha: String = p.chars().filter(|c| c.is_ascii_alphabetic()).collect();
+            if orig_alpha.len() >= 2 && orig_alpha.chars().all(|c| c.is_ascii_uppercase()) {
+                spaced.extend(k.chars().map(|c| c.to_string()));
+            } else if !k.is_empty() {
+                spaced.push(k);
+            }
+        }
+        if spaced.len() > lower.len() {
+            out.push(spaced.join(" "));
+        }
+    }
+    out
+}
+
+fn split_camel(s: &str) -> Vec<String> {
+    let mut parts = Vec::new();
+    let mut cur = String::new();
+    let chs: Vec<char> = s.chars().collect();
+    for (i, &c) in chs.iter().enumerate() {
+        if c.is_uppercase() && !cur.is_empty() {
+            let prev_lower = cur.chars().last().map(|x| x.is_lowercase()).unwrap_or(false);
+            let next_lower = chs.get(i + 1).copied().map(|x| x.is_lowercase()).unwrap_or(false);
+            if prev_lower || (cur.chars().all(|x| x.is_uppercase()) && next_lower) {
+                parts.push(std::mem::take(&mut cur));
+            }
+        }
+        cur.push(c);
+    }
+    if !cur.is_empty() {
+        parts.push(cur);
+    }
+    parts
+}
+
+
 fn apply_aliases(text: &str, entries: &[&VocabEntry]) -> String {
     let words = tokenize(text);
     if words.is_empty() {
@@ -169,14 +242,12 @@ fn apply_aliases(text: &str, entries: &[&VocabEntry]) -> String {
     }
     let mut prepared: Vec<(Vec<String>, &str)> = Vec::new();
     for e in entries {
-        for alias in &e.aliases {
-            let toks = alias_tokens(alias);
+        for alias in entry_aliases(e) {
+            let toks = alias_tokens(&alias);
             if !toks.is_empty() {
                 prepared.push((toks, e.canonical.as_str()));
             }
         }
-        // Canonical itself is also an identity alias so punctuation/case of
-        // an already-correct token is left alone (no rewrite loop).
     }
     // Longer aliases first so "open x r" beats "open".
     prepared.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
@@ -436,9 +507,23 @@ mod tests {
     }
 
     #[test]
-    fn fuzzy_off_does_not_replace() {
-        let s = store(vec![entry("ChargeBee", &[], true)], false);
+    fn word_only_hcom_and_herdr() {
+        let s = store(
+            vec![entry("HCOM", &[], true), entry("herdr", &[], true)],
+            true,
+        );
+        assert_eq!(correct_text("please open h come now", &s), "please open HCOM now");
+        assert_eq!(correct_text("pair with h com", &s), "pair with HCOM");
+        assert_eq!(correct_text("restart herder", &s), "restart herdr");
+        assert_eq!(correct_text("her keyboard", &s), "her keyboard");
         assert_eq!(correct_text("Charge B", &s), "Charge B");
+    }
+
+    #[test]
+    fn word_only_openxr() {
+        let s = store(vec![entry("OpenXR", &[], true)], true);
+        assert_eq!(correct_text("use open x r today", &s), "use OpenXR today");
+        assert_eq!(correct_text("open the door", &s), "open the door");
     }
 
     #[test]

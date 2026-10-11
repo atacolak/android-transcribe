@@ -48,7 +48,9 @@
             android:name=".VocabActivity"
             android:label="@string/vocab_title"
             android:configChanges="orientation|keyboardHidden|screenSize"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
+
 
         <!-- Live Subtitles Activity (for permissions) -->
         <activity
