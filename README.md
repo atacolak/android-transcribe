@@ -5,6 +5,11 @@ my fork of [notune/android_transcribe_app](https://github.com/notune/android_tra
 - **Custom vocabulary** — type a word, tap Add, done. After any model returns text, we rewrite it with explicit aliases then conservative fuzzy matching (Handy-inspired, MIT; thresholds are not copied). It is **not** Parakeet-specific: Whisper, Canary, Nemotron, other Parakeet GGUFs, whatever `transcribe.cpp` loads. Empty list is a passthrough. Live subtitles and file transcription stay raw on purpose.
 - **Bundled model (fork-only)** — NVIDIA Parakeet TDT 0.6B **v2 Q8_0** GGUF, English, CC-BY-4.0. Upstream still ships v3. We are not proposing this default upstream.
 - **Voice IME in the app process** — a second `:ime` process loading a ~730 MB GGUF gets killed on memory-tight devices. Same-process IME plus a delayed switch-back so One UI keeps `commitText`.
+- **Dictation recovery** (from upstream PR [#118](https://github.com/notune/android_transcribe_app/pull/118)) — if the field rejects `commitText`, Copy / Discard / optional Insert keep the words. Switch-back waits until that is resolved.
+- **Auto-stop duration** (PR [#114](https://github.com/notune/android_transcribe_app/pull/114)) — slider 1.5–8s instead of a fixed ~2s pause.
+- **Speech threshold vs room noise** (PR [#122](https://github.com/notune/android_transcribe_app/pull/122)) — same detector as auto-stop; default 3.0× background.
+- **Fit into the sentence** (PR [#115](https://github.com/notune/android_transcribe_app/pull/115)) — spacing/caps/punct at the cursor, **after** vocabulary so `HCOM` stays `HCOM`.
+- **Theme relayout** (PR [#100](https://github.com/notune/android_transcribe_app/pull/100)) — request insets after rebuilding the IME on dark/light change so the key row is not clipped.
 
 <p float="left">
   <img src=".screenshots/screenshot_fork_home.png" width="30%" alt="Home screen with Custom vocabulary" />

@@ -47,7 +47,16 @@
     <string name="setting_record_background_desc">Keep recording when the voice keyboard is hidden; the text is inserted when you return</string>
 
     <string name="setting_auto_stop">Auto-stop after silence</string>
-    <string name="setting_auto_stop_desc">End the voice input popup automatically ~2 seconds after you stop speaking</string>
+    <string name="setting_auto_stop_desc">End voice input after the selected amount of silence</string>
+    <string name="setting_auto_stop_value">Stop recording after silence: %1$s s</string>
+    <string name="setting_speech_threshold_value">Speech threshold: %1$s× background</string>
+    <string name="setting_speech_threshold_desc">Lower detects quieter speech; higher ignores more background noise. 3.0× is the default.</string>
+    <string name="setting_insert_button">Show Insert recovery action</string>
+    <string name="setting_insert_button_desc">Allow saved dictation to be inserted at the current cursor</string>
+    <string name="dictation_insert">Insert</string>
+    <string name="dictation_insert_again">Insert again</string>
+    <string name="dictation_copy">Copy</string>
+    <string name="dictation_discard">Discard</string>
 
     <string name="setting_subtitle_lines">Subtitle length</string>
     <string name="setting_subtitle_lines_desc">How many lines the live subtitles show; older text scrolls away</string>
