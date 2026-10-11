@@ -1,3 +1,22 @@
+# ATA's fork
+
+This is [atacolak](https://github.com/atacolak)'s fork of [notune/android_transcribe_app](https://github.com/notune/android_transcribe_app) (**Offline Voice Input**). Upstream remains the project; this tree is the Fold-oriented fork.
+
+## What this fork adds
+
+- **Custom vocabulary** — type a word, tap Add, done. After any model returns text, we rewrite it with explicit aliases then conservative fuzzy matching (Handy-inspired, MIT; thresholds are not copied). It is **not** Parakeet-specific: Whisper, Canary, Nemotron, other Parakeet GGUFs, whatever `transcribe.cpp` loads. Empty list is a passthrough. Live subtitles and file transcription stay raw on purpose.
+- **Bundled model (fork-only)** — NVIDIA Parakeet TDT 0.6B **v2 Q8_0** GGUF, English, CC-BY-4.0. Upstream still ships v3. We are not proposing this default upstream.
+- **Voice IME in the app process** — a second `:ime` process loading a ~730 MB GGUF gets killed on memory-tight devices. Same-process IME plus a delayed switch-back so One UI keeps `commitText`.
+
+<p float="left">
+  <img src=".screenshots/screenshot_fork_home.png" width="30%" alt="Home screen with Custom vocabulary" />
+  <img src=".screenshots/screenshot_vocab.png" width="30%" alt="Custom vocabulary word list" />
+</p>
+
+Generic pieces (vocabulary, IME process) are offered upstream as separate PRs. Personal model selection stays here.
+
+---
+
 # Offline Voice Input (Android)
 
 An offline, privacy-focused speech-to-text tool for Android, built with Rust. Tap the microphone on the keyboard you already use — your speech is transcribed entirely on-device and typed into any app. Also includes live subtitles and an optional dedicated voice keyboard.
