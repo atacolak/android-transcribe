@@ -1,4 +1,4 @@
-This is [my](https://github.com/atacolak) fork of [notune/android_transcribe_app](https://github.com/notune/android_transcribe_app) (**Offline Voice Input**). Upstream remains the project; this tree is the Fold-oriented fork.
+my fork of [notune/android_transcribe_app](https://github.com/notune/android_transcribe_app).
 
 ## What this fork adds
 
