@@ -240,7 +240,7 @@ public class RustInputMethodService extends InputMethodService {
                 }
 
                 if (isRecording) {
-                    stopRecording();
+                    try { stopRecording(); } catch (Throwable t) { Log.e(TAG, "stopRecording", t); }
                     if (pauseAudioActive) {
                         audioPauser.abandon(this);
                         pauseAudioActive = false;
@@ -251,15 +251,19 @@ public class RustInputMethodService extends InputMethodService {
                         audioPauser.request(this);
                         pauseAudioActive = true;
                     }
-                    startRecording();
-                    updateRecordButtonUI(true);
+                    try {
+                        startRecording();
+                        updateRecordButtonUI(true);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "startRecording failed", t);
+                    }
                 }
             });
 
             tintRecordButton(false);
             updateUiState();
             return view;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Error in onCreateInputView", e);
             TextView errorView = new TextView(this);
             errorView.setText("Error loading keyboard: " + e.getMessage());
@@ -290,8 +294,13 @@ public class RustInputMethodService extends InputMethodService {
                     audioPauser.request(this);
                     pauseAudioActive = true;
                 }
-                startRecording();
-                updateRecordButtonUI(true);
+                try {
+                    startRecording();
+                    updateRecordButtonUI(true);
+                } catch (Throwable t) {
+                    Log.e(TAG, "startRecording failed", t);
+                    pauseAudioActive = false;
+                }
             }
         }
     }
@@ -538,9 +547,12 @@ public class RustInputMethodService extends InputMethodService {
     }
 
     private void maybeSwitchBackAfterSuccess() {
-        if (pendingSwitchBack || isAutoSwitchBackEnabled()) {
-            pendingSwitchBack = false;
+        if (!(pendingSwitchBack || isAutoSwitchBackEnabled())) return;
+        pendingSwitchBack = false;
+        try {
             switchToPreviousInputMethod();
+        } catch (Throwable t) {
+            Log.w(TAG, "switchToPreviousInputMethod failed", t);
         }
     }
 }

@@ -120,12 +120,12 @@
                 android:resource="@xml/recognition_service" />
         </service>
 
-        <!-- IME Service -->
+        <!-- IME Service. Same process as the app: the Q8 GGUF is ~730 MB and a
+             second :ime process loading it again gets LMK'd on the Fold. -->
         <service
             android:name=".RustInputMethodService"
             android:label="Offline Voice Input"
             android:permission="android.permission.BIND_INPUT_METHOD"
-            android:process=":ime"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
